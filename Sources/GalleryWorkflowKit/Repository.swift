@@ -9,7 +9,6 @@ import Foundation
 import FileKit
 import SwiftyJSON
 
-
 struct Repositories: Codable {
     var items: [Repository]
 }
@@ -34,5 +33,3 @@ struct Repository: Codable {
         self.stargazers_count = json["stargazers_count"].intValue
     }
 }
-
-

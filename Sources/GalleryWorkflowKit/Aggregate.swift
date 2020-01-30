@@ -44,7 +44,6 @@ public class Aggregate {
                     continue
                 }
 
-
                 // create a release object ad push into items
                 let repo = Repository(json: repoJSON)
 
@@ -67,7 +66,6 @@ public class Aggregate {
     }
 
 }
-
 
 extension Path {
 

@@ -26,7 +26,7 @@ public class Generate {
             switch result {
             case .success(let json):
                 guard let owner = json["owner"]["login"].string ?? json["organization"]["login"].string else {
-                    print("⚠️ warning: cannot get owner")
+                    print("⚠️ warning: cannot get owner. maybe rate limit")
                     completion()
                     return
                 }
@@ -90,19 +90,19 @@ public class Generate {
                             completion()
                         }
 
-                        let infoPath = releasePath + "info.json"
+                        let infoReleasePath = releasePath + "info.json"
                         do {
                             let data = try jsonRelease.rawData() // XXX
-                            try DataFile(path: infoPath).write(data)
+                            try DataFile(path: infoReleasePath).write(data)
                         } catch {
-                            print("❗️error:  failed to update \(infoPath) : \(error)")
+                            print("❗️error: failed to update \(infoReleasePath) : \(error)")
                             completionCleanRelease()
                             return
                         }
 
                         // write again file with merged information to be able to read root info.json and have direct information about latest release
                         do {
-                            let jsonReleaseIndex: JSON =  ["release": jsonRelease]
+                            let jsonReleaseIndex: JSON = ["release": jsonRelease]
                             let data = try json.merged(with: jsonReleaseIndex).rawData() // XXX
                             try DataFile(path: infoPath).write(data)
                         } catch {
@@ -117,7 +117,7 @@ public class Generate {
                             let archiveURLString = "https://github.com/\(owner)/\(name)/releases/download/\(tag_name)/\(name).zip"
                             Downloader.load(url: URL(string: archiveURLString)!, to: archivePath.url) {
 
-                                guard let archive = Archive(url: archivePath.url, accessMode: .read) else{
+                                guard let archive = Archive(url: archivePath.url, accessMode: .read) else {
                                     print("❗️error: failed to read archive: \(archivePath)")
                                     completionCleanRelease()
                                     return
@@ -155,14 +155,13 @@ public class Generate {
                                 completion()
                             }
                         } else {
-                            completionCleanRelease()
+                            completion()
                         }
                     case .failure(let error):
                         print("❗️error: failed to get repository information: \(error)")
                         completion()
                     }
                 }
-
 
             case .failure(let error):
                 print("❗️error: failed to get repository information: \(error)")
@@ -214,18 +213,16 @@ extension Github {
     }
 }
 
-
 class Downloader {
-    class func load(url: URL, to localUrl: URL, completion: @escaping () -> ()) {
+    class func load(url: URL, to localUrl: URL, completion: @escaping () -> Void) {
         let sessionConfig = URLSessionConfiguration.default
         let session = URLSession(configuration: sessionConfig)
         let request = URLRequest(url: url)
 
         let task = session.downloadTask(with: request) { (tempLocalUrl, response, error) in
             if let error = error {
-                print("❗️ error download archive: \(error)");
-            }
-            else if let tempLocalUrl = tempLocalUrl {
+                print("❗️ error download archive: \(error)")
+            } else if let tempLocalUrl = tempLocalUrl {
                 if let statusCode = (response as? HTTPURLResponse)?.statusCode {
                     print("⬇ download success \(statusCode) to \(localUrl)")
                 }

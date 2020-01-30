@@ -19,7 +19,6 @@ class Github {
         self.session = session
     }
 
-
     // /repos/:owner/:repo/releases/"latest"
     // project = :owner/:repo
     func getLatestRelease(project: String, handler: @escaping (Result<JSON, Error>) -> Void) {
@@ -48,7 +47,6 @@ class Github {
         }
         task.resume()
     }
-
 
     // /repos/:owner/:repo/releases
     // project = :owner/:repo
@@ -80,7 +78,7 @@ class Github {
     }
 
     func downloadFile(url: URL, handler: @escaping (Result<URL, Error>) -> Void) {
-        let task = URLSession.shared.downloadTask(with: url) { localURL, urlResponse, error in
+        let task = URLSession.shared.downloadTask(with: url) { localURL, _, error in
             guard let localURL = localURL else {
                 if let error = error {
                     handler(.failure(error))
