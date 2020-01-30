@@ -79,7 +79,10 @@ public class Generate {
                             return
                         }
 
-                        var completionCleanRelease: () -> Void = {
+                       // let latestPath = repoPath + "latest"
+                        //try? TextFile(path: latestPath).write(tag_name)
+
+                        let completionCleanRelease: () -> Void = {
                             for path in releasePath.children() { // XXX maybe clean recursively
                                 try? path.deleteFile()
                             }
@@ -89,11 +92,22 @@ public class Generate {
 
                         let infoPath = releasePath + "info.json"
                         do {
-                            let data = try json.rawData() // XXX
+                            let data = try jsonRelease.rawData() // XXX
                             try DataFile(path: infoPath).write(data)
                         } catch {
                             print("❗️error:  failed to update \(infoPath) : \(error)")
                             completionCleanRelease()
+                            return
+                        }
+
+                        // write again file with merged information to be able to read root info.json and have direct information about latest release
+                        do {
+                            let jsonReleaseIndex: JSON =  ["release": jsonRelease]
+                            let data = try json.merged(with: jsonReleaseIndex).rawData() // XXX
+                            try DataFile(path: infoPath).write(data)
+                        } catch {
+                            print("❗️error:  failed to update \(infoPath) : \(error)")
+                            completion()
                             return
                         }
 
