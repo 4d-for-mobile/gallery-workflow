@@ -27,4 +27,15 @@ extension Topic {
 public struct TopicRepository {
     var topic: Topic
     var url: URL
+
+    var owner: String {
+        return  url.pathComponents[1]
+    }
+    var repo: String {
+        return url.pathComponents[2]
+    }
+    var projectName: String {
+        let pathComponents = url.pathComponents[1..<3]
+        return pathComponents.joined(separator: "/")
+    }
 }

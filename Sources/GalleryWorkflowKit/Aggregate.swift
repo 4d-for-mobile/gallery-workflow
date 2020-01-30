@@ -34,17 +34,21 @@ public class Aggregate {
             let topicJSONPath = topicPath + "index.json"
             for repository in repositories {
 
-                let repositoryPath = topicPath + ""
+                let repositoryPath = topicPath + repository.projectName
+                print(" 📦 Manage repository \(repository.projectName)")
 
                 // read info.json
-
-                let releasePath = topicPath + ""
-                // read release.json
-                //
+                let repositoryInfoPath = repositoryPath+"info.json"
+                guard let repoJSON = repositoryInfoPath.json else {
+                    print("skipped, no info.json file")
+                    continue
+                }
 
 
                 // create a release object ad push into items
+                let repo = Repository(json: repoJSON)
 
+                items.append(repo)
             }
             guard let data = try? JSONEncoder().encode(Repositories(items: items)) else {
                 print("❗️error: cannot encode repositories into topic : \(topic)")
@@ -53,6 +57,7 @@ public class Aggregate {
 
             do {
                 try DataFile(path: topicJSONPath).write(data, options: .atomicWrite)
+                print("📝 \(topicJSONPath)")
             } catch {
                 print("❗️error: when writing file for topic : \(topic)")
                 continue
@@ -61,4 +66,16 @@ public class Aggregate {
         }
     }
 
+}
+
+
+extension Path {
+
+    var json: JSON? {
+        guard let data = try? DataFile(path: self).read() else {
+            return nil
+        }
+
+        return try? JSON(data: data)
+    }
 }

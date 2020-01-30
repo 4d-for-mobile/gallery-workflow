@@ -8,7 +8,7 @@ struct AggregateCommand: CommandProtocol {
     typealias Options = AggregateOptions
     typealias ClientError = Options.ClientError
 
-    let verb: String = "Aggregate"
+    let verb: String = "aggregate"
     var function: String = "Aggregate files by repository"
 
     func run(_ options: AggregateCommand.Options) -> Result<(), AggregateCommand.ClientError> {

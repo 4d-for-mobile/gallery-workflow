@@ -214,12 +214,6 @@ extension Github {
     }
 }
 
-extension TopicRepository {
-    var projectName: String {
-        let pathComponents = url.pathComponents[1..<3]
-        return pathComponents.joined(separator: "/")
-    }
-}
 
 class Downloader {
     class func load(url: URL, to localUrl: URL, completion: @escaping () -> ()) {
