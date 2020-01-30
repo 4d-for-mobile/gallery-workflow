@@ -15,6 +15,7 @@ public struct GalleryWorkflow {
     public func run() {
         let registry = CommandRegistry<CommandantError<()>>()
         registry.register(GenerateCommand())
+        registry.register(AggregateCommand())
         registry.register(HelpCommand(registry: registry))
         registry.register(VersionCommand())
 

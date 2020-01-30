@@ -79,7 +79,7 @@ public class Generate {
                             return
                         }
 
-                        var completionRelease: () -> Void = {
+                        var completionCleanRelease: () -> Void = {
                             for path in releasePath.children() { // XXX maybe clean recursively
                                 try? path.deleteFile()
                             }
@@ -93,7 +93,7 @@ public class Generate {
                             try DataFile(path: infoPath).write(data)
                         } catch {
                             print("❗️error:  failed to update \(infoPath) : \(error)")
-                            completionRelease()
+                            completionCleanRelease()
                             return
                         }
 
@@ -105,14 +105,14 @@ public class Generate {
 
                                 guard let archive = Archive(url: archivePath.url, accessMode: .read) else{
                                     print("❗️error: failed to read archive: \(archivePath)")
-                                    completionRelease()
+                                    completionCleanRelease()
                                     return
                                 }
 
                                 let file = "manifest.json"
                                 guard let entry = archive[file] else {
                                     print("❗️error: failed to read manifest in: \(archivePath)")
-                                    completionRelease()
+                                    completionCleanRelease()
                                     return
                                 }
                                 let destinationManifestPath = releasePath + file
@@ -120,7 +120,7 @@ public class Generate {
                                     _ = try archive.extract(entry, to: destinationManifestPath.url)
                                 } catch {
                                     print("❗️error: failed to read manifest in: \(archivePath)")
-                                    completionRelease()
+                                    completionCleanRelease()
                                     return
                                 }
 
@@ -138,10 +138,10 @@ public class Generate {
                                         // print("Extracting entry from archive failed with error:\(error)")
                                     }
                                 }
-                                completionRelease()
+                                completion()
                             }
                         } else {
-                            completionRelease()
+                            completionCleanRelease()
                         }
                     case .failure(let error):
                         print("❗️error: failed to get repository information: \(error)")
@@ -214,22 +214,21 @@ class Downloader {
         let request = URLRequest(url: url)
 
         let task = session.downloadTask(with: request) { (tempLocalUrl, response, error) in
-            if let tempLocalUrl = tempLocalUrl, error == nil {
-                // Success
+            if let error = error {
+                print("❗️ error download archive: \(error)");
+            }
+            else if let tempLocalUrl = tempLocalUrl {
                 if let statusCode = (response as? HTTPURLResponse)?.statusCode {
-                    print("⬇ download success \(statusCode)")
+                    print("⬇ download success \(statusCode) to \(localUrl)")
                 }
 
                 do {
                     try FileManager.default.copyItem(at: tempLocalUrl, to: localUrl)
-                    completion()
                 } catch (let writeError) {
                     print("❗️ error: writing file \(localUrl) : \(writeError)")
                 }
-
-            } else if let error = error {
-                print("❗️ error download archive: \(error)");
             }
+            completion()
         }
         task.resume()
     }
