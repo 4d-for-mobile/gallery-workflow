@@ -141,7 +141,7 @@ public class Generate {
                                 // XXX maybe read manifest.json to read image url
 
                                 // try to extract image, could help to create miniature
-                                for file in ["template.gif", "template.svg", "template.png", "logo.png"] {
+                                for file in Config.images {
                                     guard let entry = archive[file] else {
                                         continue
                                     }
@@ -172,10 +172,10 @@ public class Generate {
         dispatchSemaphore.wait()
     }
 
-    public func run(_ workingPath: Path, topics: [String], githubToken: String) throws {
+    public func run(_ workingPath: Path, output: String, topics: [String], githubToken: String) throws {
         let topics = topics.map({ Topic(name: $0) })
 
-        let outputPath = workingPath + "Output"
+        let outputPath = workingPath + output
         let github = Github(accessToken: githubToken)
 
         for topic in topics {

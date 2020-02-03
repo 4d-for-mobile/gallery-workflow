@@ -16,20 +16,58 @@ struct Repositories: Codable {
 struct Repository: Codable {
     var name: String
     var description: String
-    var owner: String
+    var author: String
 
     var html_url: String
 
-    var release: String
+    var version: String
 
     var stargazers_count: Int
+    var stargazers_url: String
 
-    init(json: JSON) {
-        self.name = json["name"].stringValue
-        self.description = json["description"].stringValue
+    var download_count: Int?
+    var download_url: String?
+
+    var image_url: String?
+
+    init?(json: JSON, manifest: JSON, versionPath: Path) {
+        let repoName = json["name"].string
+        guard let name = manifest["name"].string ?? repoName else {
+            return nil
+        }
+        self.name = name
+        self.description = manifest["description"].string ?? json["description"].stringValue
         self.html_url = json["html_url"].stringValue
-        self.owner = json["owner"]["login"].stringValue
-        self.release = json["release"]["tag_name"].stringValue
+        self.author = manifest["author"].string ?? json["owner"]["login"].stringValue
         self.stargazers_count = json["stargazers_count"].intValue
+        self.stargazers_url = json["stargazers_url"].stringValue
+
+        let jsonRelease = json["release"]
+        self.version = jsonRelease["tag_name"].stringValue
+        assert(manifest["version"].stringValue == self.version)
+
+        for asset in jsonRelease["assets"].arrayValue {
+            if let repoName = repoName, asset["name"].stringValue.starts(with: repoName) {
+                self.download_url = asset["browser_download_url"].stringValue
+                self.download_count = asset["download_count"].intValue
+                break
+            }
+        }
+
+        if self.download_url == nil {
+            return nil
+        }
+
+        if let logo = manifest["logo"].string {
+            self.image_url = logo
+        } else {
+            for image in Config.images {
+                let imagePath: Path = versionPath + image
+                if imagePath.exists {
+                    self.image_url = imagePath.components.suffix(6).map({ $0.fileName}).joined(separator: "/")
+                    continue
+                }
+            }
+        }
     }
 }

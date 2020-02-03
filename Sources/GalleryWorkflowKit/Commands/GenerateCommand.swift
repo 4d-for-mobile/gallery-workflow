@@ -21,10 +21,11 @@ struct GenerateCommand: CommandProtocol {
         let config = Config(options: options) ?? Config.default
         let topics = options.topic?.components(separatedBy: ",") ?? config.topics
         let githubToken = options.githubToken ?? ""
+        let output = options.output ?? config.output
 
         let builder = Generate()
         do {
-            try builder.run(Path(rawValue: workDirectoryString), topics: topics, githubToken: githubToken)
+            try builder.run(Path(rawValue: workDirectoryString), output: output, topics: topics, githubToken: githubToken)
         } catch let error as FileKitError {
             print("\(error) \(String(describing: error.error))")
             exit(1)
@@ -45,13 +46,16 @@ struct GenerateOptions: OptionsProtocol {
     let topic: String?
     let url: String?
     let configurationFile: String?
+    let output: String?
 
-    static func create(_ path: String?) -> (_ githubToken: String?)  -> (_ topic: String?) -> (_ url: String?) -> (_ config: String?) -> GenerateOptions {
+    static func create(_ path: String?) -> (_ githubToken: String?)  -> (_ topic: String?) -> (_ url: String?) -> (_ config: String?) -> (_ output: String?) -> GenerateOptions {
         return { githubToken in
             return { topic in
                 return { url in
                     return { config in
-                        self.init(path: path, githubToken: githubToken, topic: topic, url: url, configurationFile: config)
+                        return { output in
+                            self.init(path: path, githubToken: githubToken, topic: topic, url: url, configurationFile: config, output: output)
+                        }
                     }
                 }
             }
@@ -65,6 +69,7 @@ struct GenerateOptions: OptionsProtocol {
             <*> mode <| Option(key: "topic", defaultValue: nil, usage: "email to send new repo")
             <*> mode <| Option(key: "url", defaultValue: nil, usage: "url")
             <*> mode <| Option(key: "config", defaultValue: nil, usage: "the path to configuration file")
+            <*> mode <| Option(key: "output", defaultValue: nil, usage: "the relative output path")
     }
 }
 

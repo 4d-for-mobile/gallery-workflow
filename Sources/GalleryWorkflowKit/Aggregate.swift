@@ -12,10 +12,10 @@ import Commandant
 
 public class Aggregate {
 
-    public func run(_ workingPath: Path, topics: [String]) throws {
+    public func run(_ workingPath: Path, output: String, topics: [String]) throws {
         let topics = topics.map({ Topic(name: $0) })
 
-        let outputPath = workingPath + "Output"
+        let outputPath = workingPath + output
 
         for topic in topics {
             print("🏷 Manage topic \(topic.name)")
@@ -29,7 +29,7 @@ public class Aggregate {
                 continue
             }
 
-            var items: [Repository] = []
+            var items: [Repository] = []
 
             let topicJSONPath = topicPath + "index.json"
             for repository in repositories {
@@ -44,10 +44,21 @@ public class Aggregate {
                     continue
                 }
 
-                // create a release object ad push into items
-                let repo = Repository(json: repoJSON)
+                guard let version =  repoJSON["release"]["tag_name"].string else {
+                    print("skipped, no release version")
+                    continue
+                }
+                let versionPath = repositoryPath + version
+                let manifestPath = versionPath + "manifest.json"
+                guard let manifestJSON = manifestPath.json else {
+                    print("skipped, no manifest file")
+                    continue
+                }
 
-                items.append(repo)
+                // create a release object ad push into items
+                if let repo = Repository(json: repoJSON, manifest: manifestJSON, versionPath: versionPath) {
+                    items.append(repo)
+                }
             }
             guard let data = try? JSONEncoder().encode(Repositories(items: items)) else {
                 print("❗️error: cannot encode repositories into topic : \(topic)")
