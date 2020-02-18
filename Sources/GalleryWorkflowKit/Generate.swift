@@ -116,46 +116,21 @@ public class Generate {
                             // let manifestURLString = "https://raw.githubusercontent.com/\(owner)/\(name)/\(tag_name)/manifest.json"
                             let archiveURLString = "https://github.com/\(owner)/\(name)/releases/download/\(tag_name)/\(name).zip"
                             Downloader.load(url: URL(string: archiveURLString)!, to: archivePath.url) {
-
-                                guard let archive = Archive(url: archivePath.url, accessMode: .read) else {
-                                    print("❗️error: failed to read archive: \(archivePath)")
-                                    completionCleanRelease()
-                                    return
-                                }
-
-                                let file = "manifest.json"
-                                guard let entry = archive[file] else {
-                                    print("❗️error: failed to read manifest in: \(archivePath)")
-                                    completionCleanRelease()
-                                    return
-                                }
-                                let destinationManifestPath = releasePath + file
                                 do {
-                                    _ = try archive.extract(entry, to: destinationManifestPath.url)
+                                    try self.manageArchive(archivePath: archivePath, releasePath: releasePath)
+                                    completion()
                                 } catch {
-                                    print("❗️error: failed to read manifest in: \(archivePath)")
+                                    print("❗️error: \(error)")
                                     completionCleanRelease()
-                                    return
                                 }
-
-                                // XXX maybe read manifest.json to read image url
-
-                                // try to extract image, could help to create miniature
-                                for file in Config.images {
-                                    guard let entry = archive[file] else {
-                                        continue
-                                    }
-                                    let destinationManifestPath = releasePath + file
-                                    do {
-                                        _ = try archive.extract(entry, to: destinationManifestPath.url)
-                                    } catch {
-                                        // print("Extracting entry from archive failed with error:\(error)")
-                                    }
-                                }
-                                completion()
                             }
                         } else {
-                            completion()
+                            do {
+                                try self.manageArchive(archivePath: archivePath, releasePath: releasePath)
+                                completion()
+                            } catch {
+                                completionCleanRelease()
+                            }
                         }
                     case .failure(let error):
                         print("❗️error: failed to get repository information: \(error)")
@@ -170,6 +145,116 @@ public class Generate {
 
         }
         dispatchSemaphore.wait()
+    }
+
+    func manageArchive(archivePath: Path, releasePath: Path) throws {
+        guard let archive = Archive(url: archivePath.url, accessMode: .read) else {
+            throw ArchiveError.read(archivePath)
+        }
+
+        let file = "manifest.json"
+
+        let destinationManifestPath = releasePath + file
+        if !destinationManifestPath.exists {
+            guard let entry = archive[file] else {
+                throw ArchiveError.noManifest(archivePath)
+            }
+            do {
+                _ = try archive.extract(entry, to: destinationManifestPath.url)
+            } catch {
+                throw ArchiveError.failedToExtract(archivePath, destinationManifestPath)
+            }
+        }
+
+        guard var manifest = destinationManifestPath.json else {
+            throw ArchiveError.cannotReadManifestJSON(archivePath)
+        }
+
+        if let icon = manifest["icon"].string {
+            // XXX maybe if http url do nothing
+            let iconPath: Path = releasePath + icon
+            if iconPath.exists {
+                // ok
+            } else {
+                guard let entry = archive[icon] else {
+                    throw ArchiveError.noIconAvailableButDefinedInManifest(archivePath)
+                }
+                do {
+                    _ = try archive.extract(entry, to: iconPath.url)
+                } catch {
+                    throw ArchiveError.failedToExtract(archivePath, destinationManifestPath)
+                }
+            }
+        } else {
+            // not defined, try common name
+            var iconPath: Path?
+            for file in Config.logos {
+                guard let entry = archive[file] else {
+                    continue // try next
+                }
+                let finalName = Config.imageRenames[file] ?? file
+
+                let destinationImagePath = releasePath + finalName
+                if !destinationImagePath.exists {
+                    do {
+                        _ = try archive.extract(entry, to: destinationImagePath.url)
+                        iconPath = destinationImagePath
+                    } catch {
+                        print("Extracting entry from archive failed with error:\(error)")
+                    }
+                } else {
+                    iconPath = destinationImagePath
+                }
+            }
+            if let iconPath = iconPath {
+                assert(iconPath.fileName == Config.logo)
+                manifest["icon"].string = Config.logo
+                try? destinationManifestPath.write(json: manifest) // XXX maybe throw
+            }
+
+        }
+
+        if let preview = manifest["preview"].string {
+            // XXX maybe if http url do nothing
+            let previewPath: Path = releasePath + preview
+            if previewPath.exists {
+                // ok
+            } else {
+                guard let entry = archive[preview] else {
+                    throw ArchiveError.noIconAvailableButDefinedInManifest(archivePath)
+                }
+                do {
+                    _ = try archive.extract(entry, to: previewPath.url)
+                } catch {
+                    throw ArchiveError.failedToExtract(archivePath, destinationManifestPath)
+                }
+            }
+        } else {
+            // not defined, try common name
+            var previewPath: Path?
+            for file in Config.previews {
+                guard let entry = archive[file] else {
+                    continue // try next
+                }
+                let finalName = Config.imageRenames[file] ?? file
+
+                let destinationImagePath = releasePath + finalName
+                if !destinationImagePath.exists {
+                    do {
+                        _ = try archive.extract(entry, to: destinationImagePath.url)
+                        previewPath = destinationImagePath
+                    } catch {
+                        print("Extracting entry from archive failed with error:\(error)")
+                    }
+                } else {
+                    previewPath = destinationImagePath
+                }
+            }
+            if let previewPath = previewPath {
+                manifest["preview"].string = previewPath.fileName
+                try? destinationManifestPath.write(json: manifest)// XXX maybe throw
+            }
+        }
     }
 
     public func run(_ workingPath: Path, output: String, topics: [String], githubToken: String) throws {
@@ -202,6 +287,13 @@ public class Generate {
 
 }
 
+enum ArchiveError: Error {
+    case cannotReadManifestJSON(_ archivePath: Path)
+    case noIconAvailableButDefinedInManifest(_ archivePath: Path)
+    case read(_ archivePath: Path)
+    case noManifest(_ archivePath: Path)
+    case failedToExtract(_ archivePath: Path, _ destinationPath: Path)
+}
 extension Github {
 
     func getLatestRelease(repository: TopicRepository, handler: @escaping (Result<JSON, Error>) -> Void) {

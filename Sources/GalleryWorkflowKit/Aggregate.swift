@@ -87,4 +87,8 @@ extension Path {
 
         return try? JSON(data: data)
     }
+
+    func write(json: JSON) throws {
+       try DataFile(path: self).write(try json.rawData(), options: .atomicWrite)
+    }
 }

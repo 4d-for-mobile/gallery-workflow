@@ -17,7 +17,12 @@ public struct Config: Codable {
 
     public static let defaultTopics = ["4d-for-ios-form-list", "4d-for-ios-form-detail", "4d-for-ios-form-login", "4d-for-ios-formatter"]
     public static let defaultOutput = "Specs"
-    public static let images = ["preview.gif", "preview.png", "logo.png"]
+
+    public static let logo =  "logo.png"
+    public static let logos = [ "logo.png", "layoutIconx2.png", "formatter.png"]
+    public static let preview = "preview.gif"
+    public static let previews = ["template.gif", "preview.gif", "preview.png"]
+    public static let imageRenames = ["template.gif": "preview.gif", "layoutIconx2.png": Config.logo, "formatter.png": Config.logo]
 
     private init() {
         topics = Config.defaultTopics

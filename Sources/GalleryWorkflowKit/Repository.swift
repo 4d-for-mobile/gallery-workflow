@@ -29,6 +29,7 @@ struct Repository: Codable {
     var download_url: String?
 
     var image_url: String?
+    var preview_url: String?
 
     init?(json: JSON, manifest: JSON, versionPath: Path) {
         let repoName = json["name"].string
@@ -58,16 +59,13 @@ struct Repository: Codable {
             return nil
         }
 
-        if let logo = manifest["logo"].string {
-            self.image_url = logo
-        } else {
-            for image in Config.images {
-                let imagePath: Path = versionPath + image
-                if imagePath.exists {
-                    self.image_url = imagePath.components.suffix(6).map({ $0.fileName}).joined(separator: "/")
-                    continue
-                }
-            }
+        if let image = manifest["icon"].string {
+            let imagePath: Path = versionPath + image
+            self.image_url = imagePath.components.suffix(6).map({ $0.fileName}).joined(separator: "/")
+        }
+        if let image = manifest["preview"].string {
+            let imagePath: Path = versionPath + image
+            self.preview_url = imagePath.components.suffix(6).map({ $0.fileName}).joined(separator: "/")
         }
     }
 }
