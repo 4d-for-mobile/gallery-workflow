@@ -8,7 +8,7 @@
 import Foundation
 import ArgumentParser
 
-public struct GalleryWorkflow: ParsableCommand {fV
+public struct GalleryWorkflow: ParsableCommand {
 
     public init() {}
 
