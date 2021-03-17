@@ -8,7 +8,6 @@
 import Foundation
 import FileKit
 import SwiftyJSON
-import Commandant
 import ZIPFoundation
 
 public class Generate {

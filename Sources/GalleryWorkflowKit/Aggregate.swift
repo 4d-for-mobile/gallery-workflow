@@ -8,7 +8,6 @@
 import Foundation
 import FileKit
 import SwiftyJSON
-import Commandant
 
 public class Aggregate {
 
