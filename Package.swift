@@ -17,7 +17,7 @@ let package = Package(
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "5.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.4.0")),
         .package(url: "https://github.com/jpsim/Yams.git", .upToNextMinor(from: "2.0.0")),
-        .package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.0"))
+        .package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.12"))
     ],
     targets: [
         .target(

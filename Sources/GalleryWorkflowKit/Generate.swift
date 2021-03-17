@@ -254,6 +254,27 @@ public class Generate {
                 try? destinationManifestPath.write(json: manifest)// XXX maybe throw
             }
         }
+
+        if manifest["target"].exists() {
+            // maybe check for sanity
+        } else {
+            // build target according to folder
+            var targets: [String] = []
+            if archive["ios"] != nil {
+                targets.append("ios")
+            }
+            if archive["android"] != nil {
+                targets.append("android")
+            }
+            if targets.isEmpty {
+                if archive["Sources"] != nil { // standard ios
+                    targets.append("ios")
+                } else if archive["app"] != nil { // standard android, but must not be also ios
+                    targets.append("android")
+                }
+            }
+            manifest["target"].arrayObject = targets
+        }
     }
 
     public func run(_ workingPath: Path, output: String, topics: [String], githubToken: String) throws {

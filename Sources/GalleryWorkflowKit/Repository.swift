@@ -13,10 +13,13 @@ struct Repositories: Codable {
     var items: [Repository]
 }
 
+typealias Target = String // ios or android
+
 struct Repository: Codable {
     var name: String
     var description: String
     var author: String
+    var target: [Target]?
 
     var html_url: String
 
@@ -42,6 +45,22 @@ struct Repository: Codable {
         self.author = manifest["author"].string ?? json["owner"]["login"].stringValue
         self.stargazers_count = json["stargazers_count"].intValue
         self.stargazers_url = json["stargazers_url"].stringValue
+
+        if let targets = manifest["target"].arrayObject {
+            var targetStrings: [Target] = []
+            for target in targets {
+                if let targetString = target as? Target {
+                    targetStrings.append(targetString)
+                } else if let targetDico = target as? [Target: Any] {
+                    if let targetString = targetDico["os"] as? String {
+                        targetStrings.append(targetString)
+                    } else if let targetString = targetDico.first?.key { // one key only "ios" or "android" as I see, not very common format..
+                        targetStrings.append(targetString)
+                    }
+                }
+            }
+            self.target = targetStrings
+        }
 
         let jsonRelease = json["release"]
         self.version = jsonRelease["tag_name"].stringValue
