@@ -168,6 +168,7 @@ public class Generate {
         guard var manifest = destinationManifestPath.json else {
             throw ArchiveError.cannotReadManifestJSON(archivePath)
         }
+        var mustWriteManifest = false
 
         if let icon = manifest["icon"].string {
             // XXX maybe if http url do nothing
@@ -208,7 +209,7 @@ public class Generate {
             if let iconPath = iconPath {
                 assert(iconPath.fileName == Config.logo)
                 manifest["icon"].string = Config.logo
-                try? destinationManifestPath.write(json: manifest) // XXX maybe throw
+                mustWriteManifest = true
             }
 
         }
@@ -251,7 +252,7 @@ public class Generate {
             }
             if let previewPath = previewPath {
                 manifest["preview"].string = previewPath.fileName
-                try? destinationManifestPath.write(json: manifest)// XXX maybe throw
+                mustWriteManifest = true
             }
         }
 
@@ -274,6 +275,9 @@ public class Generate {
                 }
             }
             manifest["target"].arrayObject = targets
+        }
+        if mustWriteManifest {
+            try? destinationManifestPath.write(json: manifest)// XXX maybe throw
         }
     }
 

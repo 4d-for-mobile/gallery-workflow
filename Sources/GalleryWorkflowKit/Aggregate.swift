@@ -38,12 +38,12 @@ public class Aggregate {
 
                 // read info.json
                 let repositoryInfoPath = repositoryPath+"info.json"
-                guard let repoJSON = repositoryInfoPath.json else {
+                guard let repoInfoJSON = repositoryInfoPath.json else {
                     print("skipped, no info.json file")
                     continue
                 }
 
-                guard let version =  repoJSON["release"]["tag_name"].string else {
+                guard let version = repoInfoJSON["release"]["tag_name"].string else {
                     print("skipped, no release version")
                     continue
                 }
@@ -55,7 +55,7 @@ public class Aggregate {
                 }
 
                 // create a release object ad push into items
-                if let repo = Repository(json: repoJSON, manifest: manifestJSON, versionPath: versionPath) {
+                if let repo = Repository(json: repoInfoJSON, manifest: manifestJSON, versionPath: versionPath) {
                     items.append(repo)
                 }
             }

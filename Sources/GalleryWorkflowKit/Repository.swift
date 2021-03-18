@@ -46,7 +46,7 @@ struct Repository: Codable {
         self.stargazers_count = json["stargazers_count"].intValue
         self.stargazers_url = json["stargazers_url"].stringValue
 
-        if let targets = manifest["target"].arrayObject {
+        if let targets = manifest["target"].arrayObject ?? json ["target"].arrayObject {
             var targetStrings: [Target] = []
             for target in targets {
                 if let targetString = target as? Target {
@@ -54,7 +54,8 @@ struct Repository: Codable {
                 } else if let targetDico = target as? [Target: Any] {
                     if let targetString = targetDico["os"] as? String {
                         targetStrings.append(targetString)
-                    } else if let targetString = targetDico.first?.key { // one key only "ios" or "android" as I see, not very common format..
+                    } else if let targetString = targetDico.first?.key,
+                              (targetString == "ios" || targetString == "android") { // one key only "ios" or "android" as I see, not very common format..
                         targetStrings.append(targetString)
                     }
                 }
