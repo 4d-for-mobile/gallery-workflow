@@ -26,6 +26,7 @@ public class Generate {
             case .success(let json):
                 guard let owner = json["owner"]["login"].string ?? json["organization"]["login"].string else {
                     print("⚠️ warning: cannot get owner. maybe rate limit")
+                    print("\(json)")
                     completion()
                     return
                 }
