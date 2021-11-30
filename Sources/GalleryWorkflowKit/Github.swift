@@ -25,10 +25,10 @@ class Github {
         let url: URL = apiURL.appendingPathComponent("repos").appendingPathComponent(project).appendingPathComponent("releases").appendingPathComponent("latest")
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
-            URLQueryItem(name: "access_token", value: accessToken),
             URLQueryItem(name: "per_page", value: "1000")
         ]
-        let request = URLRequest(url: components.url!)
+        var request = URLRequest(url: components.url!)
+        request.allHTTPHeaderFields = ["Authorization": "token \(accessToken)"]
        // request.allHTTPHeaderFields = ["Accept": "application/vnd.github.mercy-preview+json"]
         let task = session.dataTask(with: request) { data, response, error in
             guard let responseData = data else {
@@ -54,11 +54,10 @@ class Github {
         let url: URL = apiURL.appendingPathComponent("repos").appendingPathComponent(project)
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         components.queryItems = [
-            URLQueryItem(name: "access_token", value: accessToken),
             URLQueryItem(name: "per_page", value: "1000")
         ]
         var request = URLRequest(url: components.url!)
-        request.allHTTPHeaderFields = ["Accept": "application/vnd.github.nebula-preview+json"]
+        request.allHTTPHeaderFields = ["Accept": "application/vnd.github.nebula-preview+json", "Authorization": "token \(accessToken)"]
         let task = session.dataTask(with: request) { data, response, error in
             guard let responseData = data else {
                 if let error = error {
